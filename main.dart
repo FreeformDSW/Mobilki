@@ -5,11 +5,12 @@ void main() {
   runApp(MyApp());
 }
 
-class Transaction {
+class Transakcja {
+  final String title;
   final double amount;
   final DateTime timestamp;
 
-  Transaction({required this.amount, required this.timestamp});
+  Transakcja({required this.title, required this.amount, required this.timestamp});
 }
 
 class MyApp extends StatelessWidget {
@@ -28,16 +29,16 @@ class Bilans extends StatefulWidget {
 
 class BilansState extends State<Bilans> {
   double accountBalance = 0.0;
-  List<Transaction> transactionHistory = [];
+  List<Transakcja> transactionHistory = [];
 
-  void addAmount(double amount) {
+  void addTransaction(String title, double amount) {
     setState(() {
       accountBalance += amount;
-      transactionHistory.insert(0, Transaction(amount: amount, timestamp: DateTime.now()));
+      transactionHistory.insert(0, Transakcja(title: title, amount: amount, timestamp: DateTime.now()));
     });
   }
 
-  Color getBackgroundColor() {
+  Color mainColor() {
     return accountBalance >= 0 ? Colors.green[100]! : Colors.red[100]!;
   }
 
@@ -72,7 +73,7 @@ class BilansState extends State<Bilans> {
           ),
         ),
         body: Container(
-          color: getBackgroundColor(),
+          color: mainColor(),
           child: TabBarView(
             children: [
               Center(
@@ -91,33 +92,46 @@ class BilansState extends State<Bilans> {
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
+                            String title = '';
                             double amount = 0.0;
                             return AlertDialog(
-                              title: Text('Dodaj lub usuń kwotę'),
-                              content: TextField(
-                                decoration: InputDecoration(labelText: 'Kwota'),
-                                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                                onChanged: (value) {
-                                  if (value.isNotEmpty) {
-                                    double parsedAmount = double.tryParse(value) ?? 0.0;
-                                    setState(() {
-                                      amount = parsedAmount;
-                                    });
-                                  }
-                                },
+                              title: Text('Dodaj kwotę'),
+                              content: Column(
+                                children: [
+                                  TextField(
+                                    decoration: InputDecoration(labelText: 'Tytuł'),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        title = value;
+                                      });
+                                    },
+                                  ),
+                                  TextField(
+                                    decoration: InputDecoration(labelText: 'Kwota'),
+                                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                    onChanged: (value) {
+                                      if (value.isNotEmpty) {
+                                        double parsedAmount = double.tryParse(value) ?? 0.0;
+                                        setState(() {
+                                          amount = parsedAmount;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
                               ),
                               actions: <Widget>[
                                 TextButton(
                                   child: Text('Dodaj'),
                                   onPressed: () {
-                                    addAmount(amount);
+                                    addTransaction(title, amount);
                                     Navigator.of(context).pop();
                                   },
                                 ),
                                 TextButton(
                                   child: Text('Odejmij'),
                                   onPressed: () {
-                                    addAmount(-amount);
+                                    addTransaction(title, -amount);
                                     Navigator.of(context).pop();
                                   },
                                 ),
@@ -137,7 +151,13 @@ class BilansState extends State<Bilans> {
                 itemBuilder: (context, index) {
                   return ListTile(
                     title: Text('Transakcja: ${transactionHistory[index].amount.toStringAsFixed(2)} zł'),
-                    subtitle: Text('Data: ${DateFormat('dd-MM-yyyy HH:mm:ss').format(transactionHistory[index].timestamp)}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Tytuł: ${transactionHistory[index].title}'),
+                        Text('Data: ${DateFormat('dd-MM-yyyy HH:mm:ss').format(transactionHistory[index].timestamp)}'),
+                      ],
+                    ),
                   );
                 },
               ),
